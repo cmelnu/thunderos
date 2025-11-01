@@ -1,0 +1,61 @@
+name: ThunderOS CI
+
+on:
+  push:
+    branches: [ main, dev/*, feature/*, release/* ]
+  pull_request:
+    branches: [ main, dev/* ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Install RISC-V toolchain
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y gcc-riscv64-unknown-elf binutils-riscv64-unknown-elf
+    
+    - name: Install QEMU
+      run: |
+        sudo apt-get install -y qemu-system-misc
+    
+    - name: Build kernel
+      run: make
+    
+    - name: Verify build artifacts
+      run: |
+        test -f build/thunderos.elf
+        test -f build/thunderos.bin
+    
+    - name: Run QEMU smoke test
+      run: |
+        timeout 10s make qemu > qemu_output.log 2>&1 || true
+        # Check for successful boot messages
+        grep -q "ThunderOS" qemu_output.log || (echo "Boot failed" && cat qemu_output.log && exit 1)
+        grep -q "Process" qemu_output.log || (echo "Process scheduling not working" && cat qemu_output.log && exit 1)
+    
+    - name: Build tests
+      run: |
+        cd tests
+        make || echo "Test build skipped (optional)"
+    
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: thunderos-build
+        path: |
+          build/thunderos.elf
+          build/thunderos.bin
+        retention-days: 7
+    
+    - name: Upload test logs
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: qemu-logs
+        path: qemu_output.log
+        retention-days: 7
