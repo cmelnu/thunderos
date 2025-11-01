@@ -33,8 +33,8 @@ run_qemu() {
   echo "Started qemu pid=$QEMU_PID"
   # Wait for boot string
   wait_for_qemu "ThunderOS" || {
-    kill $QEMU_PID 2>/dev/null || true
-    wait $QEMU_PID 2>/dev/null || true
+    kill "$QEMU_PID" 2>/dev/null || true
+    wait "$QEMU_PID" 2>/dev/null || true
     return 1
   }
   # Keep QEMU running for further tests; consumer can kill it
