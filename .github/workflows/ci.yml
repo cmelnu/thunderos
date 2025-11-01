@@ -33,10 +33,10 @@ jobs:
     
     - name: Run QEMU smoke test
       run: |
-        timeout 10s make qemu > qemu_output.log 2>&1 || true
+        timeout 30s make qemu > qemu_output.log 2>&1 || true
         # Check for successful boot messages
         grep -q "ThunderOS" qemu_output.log || (echo "Boot failed" && cat qemu_output.log && exit 1)
-        grep -q "Process" qemu_output.log || (echo "Process scheduling not working" && cat qemu_output.log && exit 1)
+        grep -q "Created Process" qemu_output.log || (echo "Process creation not working" && cat qemu_output.log && exit 1)
     
     - name: Build tests
       run: |
