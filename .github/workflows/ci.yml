@@ -34,20 +34,14 @@ jobs:
     - name: Run QEMU and wait for boot
       run: |
         chmod +x scripts/run-qemu.sh
-        # Start QEMU in background, capture output and PID
-        ./scripts/run-qemu.sh -machine virt -m 128M -bios default -kernel build/thunderos.elf > qemu_output.log 2>&1 &
-        echo $! > qemu.pid
-        QEMU_PID=$!
-        # Wait for boot pattern or timeout
-        timeout 90s bash -c 'while ! grep -q "Created Process" qemu_output.log; do sleep 1; done' || {
+        # Run QEMU and let the script handle waiting for boot
+        ./scripts/run-qemu.sh -machine virt -m 128M -bios default -kernel build/thunderos.elf > qemu_output.log 2>&1
+        EXIT_CODE=$?
+        if [ $EXIT_CODE -ne 0 ]; then
           echo "QEMU failed to boot or timed out"
-          kill $QEMU_PID || true
-          exit 1
-        }
-        # Additional checks for successful boot messages
-        grep -q "Created Process" qemu_output.log || { echo "Process creation not working" && cat qemu_output.log && kill $QEMU_PID || true && exit 1; }
-        # Kill QEMU after successful checks
-        if [ -f qemu.pid ]; then kill $(cat qemu.pid) || true; fi
+          cat qemu_output.log
+          exit $EXIT_CODE
+        fi
       env:
         TIMEOUT_SECONDS: 60
     
