@@ -40,7 +40,7 @@ jobs:
           exit 1
         }
         # Additional checks for successful boot messages
-        grep -q "Created Process" qemu_output.log || (echo "Process creation not working" && cat qemu_output.log && exit 1)
+        grep -q "Created Process" qemu_output.log || { echo "Process creation not working" && cat qemu_output.log && exit 1; }
         # Kill QEMU after successful checks
         pkill -f qemu-system-riscv64 || true
       env:
